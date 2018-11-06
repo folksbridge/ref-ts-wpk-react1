@@ -1,0 +1,141 @@
+ts-wpk-react1:
+https://codeburst.io/webpack-typescript-react-part-1-dc154e250f23
+
+yarn init
+yarn add webpack webpack-cli typescript awesome-typescript-loader -D
+
+create basic folders and files
+public/index.html, 
+src/index.js,
+webpack.config.js
+tsconfig.json
+
+add to package.json:
+  "scripts": {
+    "build": "webpack"
+  },
+
+yarn build
+cp public/index.html dist
+open dist/index.html
+
+use the browser’s development tools to debug our TypeScript
+update tsconfig.json: "sourceMap": true,
+update webpack.config.js: devtool: 'source-map',
+
+yarn add react react-dom @types/react @types/react-dom -S
+
+update tsconfig.json: 
+    "jsx": "react",
+    "lib": ["es6", "dom"]
+update webpack.config.js: 
+    entry: './src/index.tsx',
+    resolve: {
+        extensions: ['.js', '.json', '.ts', '.tsx'],
+    },
+    test: /\.(ts|tsx)$/,
+
+update public/index.html": <div id="root"></div>
+
+Index.tsx and App.tsx:
+import * as React from ‘react’; instead of the more common import React from ‘react’; is due to a difference in opinion between TypeScript and Babel on handling CommonJS modules.
+not use the React component’s propTypes property to enforce proper component usage (at run-time). Instead, we use TypeScript for this purpose (the interface AppProps). 
+
+cp public/index.html dist
+yarn build
+
+update tsconfig.json:
+        "allowSyntheticDefaultImports": true,
+        "module": "ESNext",
+        "moduleResolution": "node",
+    "exclude": [
+    "node_modules"
+    ],
+
+The module and moduleResolution properties configure TypeScript to treat modules as ESNext modules (really same as ES2015 as far as I can tell) and to use node_modules for third-party packages.
+The allowSyntheticDefaultImports property appears to enable TypeScript to treat CommonJS modules as ESNext modules; allowing use to just use import React from ‘react’.
+Finally, we exclude node_modules as we do not want to transpile third-party modules.
+
+"npx http-server" in dist folder to fix ome issues with viewing web pages from the file-system
+
+Next we will explore a third-party library that inherently supports TypesScript; does not require a separate type declarations; Ant Design.
+
+yarn add css-loader style-loader --save-dev
+
+update webpack.config.js:
+        {
+            test: /\.css$/,
+            use: [
+                {
+                    loader: 'style-loader',
+                },
+                {
+                    loader: 'css-loader',
+                },
+            ],
+        },
+
+install Ant Design: yarn add antd -S
+
+update src/components/App.tsx:
+    import Button from 'antd/lib/button';
+    import 'antd/lib/button/style/css';
+    <Button type="primary">Test</Button>
+
+==================
+
+ESLint and eslint-config-airbnb, I was happy to learn that there is TSLint and tslint-config-airbnb.
+much (if not all) of the compiler linting options are a duplication of what is available with TSLint and tslint-config-airbnb.
+
+yarn add tslint --save-dev
+./node_modules/.bin/tslint --init
+
+yarn add tslint-config-airbnb --save-dev
+
+update tslint.json:
+{
+  "extends": "tslint-config-airbnb"
+}
+=========================================
+yarn add jest @types/jest ts-jest --save-dev
+
+create file: jest.config.js:
+    module.exports = {
+        'roots': [
+        '<rootDir>/src'
+        ],
+        'transform': {
+        '.*\.tsx?$': 'ts-jest'
+        },
+        'testRegex': '(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$',
+        'moduleFileExtensions': [
+        'ts',
+        'tsx',
+        'js',
+        'jsx',
+        'json',
+        'node'
+        ]
+    }
+/*
+Jest is directly compiling code (not using webpack), you need to handle non-JavaScript imports (like css and image files) appropriately. 
+*/
+update jest.config.js:
+    moduleNameMapper: {
+        ".(css|jpg|png)$": "<rootDir>/empty-module.js"
+    },
+create file: empty-module.js
+    module.exports = '';
+/* For generating a meaningful coverage report: */
+update jest.config.js:
+    collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/index.tsx',
+    ],
+
+add to package.json scripts:
+    "test": "jest",
+    "report": "jest --coverage"
+
+shallow rendering with enzyme:
+yarn add enzyme enzyme-adapter-react-16 @types/enzyme @types/enzyme-adapter-react-16 -D
